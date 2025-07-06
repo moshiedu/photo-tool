@@ -119,9 +119,7 @@ fun updateCropRect(rect: Rect?, dragAmount: Offset, handle: CropHandle, aspectRa
 fun CropScreen(
     bitmap: Bitmap,
     onApplyCrop: (Bitmap) -> Unit,
-    onCancelCrop: () -> Unit,
-    selectedAspectRatio: AspectRatio,
-    onAspectRatioChange: (AspectRatio) -> Unit
+    onCancelCrop: () -> Unit
 ) {
     var scale by remember { mutableStateOf(1f) }
     var rotation by remember { mutableStateOf(0f) }
