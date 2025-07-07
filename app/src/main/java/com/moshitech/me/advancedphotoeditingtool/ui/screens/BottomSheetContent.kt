@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
@@ -24,6 +25,7 @@ fun ToolButton(tool: PhotoEditorTool, currentTool: PhotoEditorTool, onClick: (Ph
         PhotoEditorTool.CROP -> Icons.Default.Crop
         PhotoEditorTool.EFFECTS -> Icons.Default.Stars
         PhotoEditorTool.TEXT -> Icons.Default.TextFields
+        PhotoEditorTool.ROTATE -> Icons.AutoMirrored.Filled.RotateRight
     }
     val tint = if (tool == currentTool) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
 
@@ -73,7 +75,45 @@ fun BottomSheetContent(
                 Text("Filter thumbnails will go here.")
                 // Add filter previews
             }
-            
+            PhotoEditorTool.ROTATE -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onRotationChange(rotation - 90f) }) {
+                        Icon(Icons.AutoMirrored.Filled.RotateLeft, contentDescription = "Rotate Left")
+                    }
+                    Text("Rotation: ${rotation.toInt()}°")
+                    IconButton(onClick = { onRotationChange(rotation + 90f) }) {
+                        Icon(Icons.AutoMirrored.Filled.RotateRight, contentDescription = "Rotate Right")
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onFlipHorizontalChange(!flipHorizontal) }) {
+                        Icon(Icons.Default.Flip, contentDescription = "Flip Horizontal")
+                    }
+                    Text("Flip Horizontal: $flipHorizontal")
+                    IconButton(onClick = { onFlipVerticalChange(!flipVertical) }) {
+                        Icon(Icons.Default.Flip, contentDescription = "Flip Vertical")
+                    }
+                    Text("Flip Vertical: $flipVertical")
+                }
+            }
+            PhotoEditorTool.CROP -> {
+                currentImageBitmap?.let {
+                    CropScreen(
+                        bitmap = it,
+                        onApplyCrop = onCropApply,
+                        onCancelCrop = onCropCancel
+                    )
+                }
+            }
             PhotoEditorTool.EFFECTS -> {
                 Text("Effect options will go here.")
                 // Add effect controls

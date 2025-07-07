@@ -42,7 +42,7 @@ import com.moshitech.me.advancedphotoeditingtool.applyTransformations
 
 
 enum class PhotoEditorTool {
-    AUTO, FILTERS, CROP, EFFECTS, TEXT
+    AUTO, FILTERS, CROP, EFFECTS, TEXT, ROTATE
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,6 +140,10 @@ fun PhotoEditorScreen(
                         showBottomSheet = true
                     }
                     ToolButton(tool = PhotoEditorTool.TEXT, currentTool = currentTool) {
+                        currentTool = it
+                        showBottomSheet = true
+                    }
+                    ToolButton(tool = PhotoEditorTool.ROTATE, currentTool = currentTool) {
                         currentTool = it
                         showBottomSheet = true
                     }

@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.unit.toOffset
@@ -235,19 +236,18 @@ fun CropScreen(
                 }
 
                 val handleSize = 24.dp.toPx()
-                val handleColor = Color.Blue
 
                 // Draw corner handles
-                drawRect(color = handleColor, topLeft = cropRect.topLeft - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
-                drawRect(color = handleColor, topLeft = cropRect.topRight - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
-                drawRect(color = handleColor, topLeft = cropRect.bottomLeft - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
-                drawRect(color = handleColor, topLeft = cropRect.bottomRight - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.TOP_LEFT.ordinal) Color.Red else Color.Blue, topLeft = cropRect.topLeft - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.TOP_RIGHT.ordinal) Color.Red else Color.Blue, topLeft = cropRect.topRight - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.BOTTOM_LEFT.ordinal) Color.Red else Color.Blue, topLeft = cropRect.bottomLeft - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.BOTTOM_RIGHT.ordinal) Color.Red else Color.Blue, topLeft = cropRect.bottomRight - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
 
                 // Draw edge handles
-                drawRect(color = handleColor, topLeft = cropRect.centerLeft - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
-                drawRect(color = handleColor, topLeft = cropRect.topCenter - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
-                drawRect(color = handleColor, topLeft = cropRect.centerRight - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
-                drawRect(color = handleColor, topLeft = cropRect.bottomCenter - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.LEFT.ordinal) Color.Red else Color.Blue, topLeft = cropRect.centerLeft - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.TOP.ordinal) Color.Red else Color.Blue, topLeft = cropRect.topCenter - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.RIGHT.ordinal) Color.Red else Color.Blue, topLeft = cropRect.centerRight - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
+                drawRect(color = if (draggingHandle == CropHandle.BOTTOM.ordinal) Color.Red else Color.Blue, topLeft = cropRect.bottomCenter - Offset(handleSize/2, handleSize/2), size = Size(handleSize, handleSize))
             }
             Box(
                 modifier = Modifier
@@ -275,71 +275,86 @@ fun CropScreen(
             )
         }
 
-        // Straighten Slider
-        Slider(
-            value = straightenAngle,
-            onValueChange = { straightenAngle = it },
-            valueRange = -45f..45f,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color.DarkGray, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .padding(16.dp)
-        )
-
-        // Aspect Ratio controls
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceAround
         ) {
-            AspectRatio.values().forEach { ratio ->
-                Button(onClick = { selectedAspectRatio = ratio }) {
-                    Text(ratio.name)
+            Text(
+                text = "Crop Options",
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Straighten Slider
+            Text(text = "Straighten", color = Color.White)
+            Slider(
+                value = straightenAngle,
+                onValueChange = { straightenAngle = it },
+                valueRange = -45f..45f,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            // Aspect Ratio controls
+            Text(text = "Aspect Ratio", color = Color.White)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                AspectRatio.values().forEach { ratio ->
+                    Button(onClick = { selectedAspectRatio = ratio }) {
+                        Text(ratio.name)
+                    }
                 }
             }
-        }
 
-        // Guide toggles
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            Button(onClick = { showGoldenRatioGuide = !showGoldenRatioGuide }) {
-                Text("Golden Ratio")
+            // Guide toggles
+            Text(text = "Guides", color = Color.White)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Button(onClick = { showGoldenRatioGuide = !showGoldenRatioGuide }) {
+                    Text("Golden Ratio")
+                }
+                Button(onClick = { showDiagonalGuide = !showDiagonalGuide }) {
+                    Text("Diagonal Guides")
+                }
             }
-            Button(onClick = { showDiagonalGuide = !showDiagonalGuide }) {
-                Text("Diagonal Guides")
-            }
-        }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            Button(onClick = onCancelCrop) {
-                Text("Cancel")
-            }
-            Button(onClick = { /* Reset all crop-related states */
-                scale = 1f
-                rotation = 0f
-                offset = Offset.Zero
-                cropRect = androidx.compose.ui.geometry.Rect.Zero
-                straightenAngle = 0f
-                selectedAspectRatio = AspectRatio.FREE
-                showGoldenRatioGuide = false
-                showDiagonalGuide = false
-            }) {
-                Text("Reset")
-            }
-            Button(onClick = {
-                val croppedBitmap = cropBitmap(bitmap, cropRect, scale, rotation + straightenAngle, offset)
-                onApplyCrop(croppedBitmap)
-            }) {
-                Text("Apply")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Button(onClick = onCancelCrop) {
+                    Text("Cancel")
+                }
+                Button(onClick = { /* Reset all crop-related states */
+                    scale = 1f
+                    rotation = 0f
+                    offset = Offset.Zero
+                    cropRect = androidx.compose.ui.geometry.Rect.Zero
+                    straightenAngle = 0f
+                    selectedAspectRatio = AspectRatio.FREE
+                    showGoldenRatioGuide = false
+                    showDiagonalGuide = false
+                }) {
+                    Text("Reset")
+                }
+                Button(onClick = {
+                    val croppedBitmap = cropBitmap(bitmap, cropRect, scale, rotation + straightenAngle, offset, containerSize)
+                    onApplyCrop(croppedBitmap)
+                }) {
+                    Text("Apply")
+                }
             }
         }
     }
