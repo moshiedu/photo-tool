@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -80,6 +82,7 @@ fun PhotoEditorScreen(
 
     LaunchedEffect(selectedImageUri, capturedImageBitmap) {
         currentImageBitmap = capturedImageBitmap ?: selectedImageUri?.let { uriToBitmap(it, context) }
+        currentTool = PhotoEditorTool.AUTO // Reset tool when a new image is loaded
     }
 
     Scaffold(
@@ -133,7 +136,6 @@ fun PhotoEditorScreen(
                     }
                     ToolButton(tool = PhotoEditorTool.CROP, currentTool = currentTool) {
                         currentTool = it
-                        showBottomSheet = true
                     }
                     ToolButton(tool = PhotoEditorTool.EFFECTS, currentTool = currentTool) {
                         currentTool = it
@@ -234,24 +236,39 @@ fun PhotoEditorScreen(
         if (showBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState
+                sheetState = sheetState,
+                containerColor = Color.White,
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
             ) {
-                BottomSheetContent(
-                    currentTool = currentTool,
-                    currentImageBitmap = currentImageBitmap,
-                    onCropApply = onCropApply,
-                    onCropCancel = onCropCancel,
-                    rotation = rotation,
-                    onRotationChange = { rotation = it },
-                    flipHorizontal = flipHorizontal,
-                    onFlipHorizontalChange = { flipHorizontal = it },
-                    flipVertical = flipVertical,
-                    onFlipVerticalChange = { flipVertical = it },
-                    straightenAngle = straightenAngle,
-                    onStraightenAngleChange = { straightenAngle = it },
-                    showBottomSheet = { showBottomSheet = it },
-                    currentToolChange = { currentTool = it }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(48.dp)
+                            .height(4.dp)
+                            .background(Color.LightGray, RoundedCornerShape(2.dp))
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    BottomSheetContent(
+                        currentTool = currentTool,
+                        currentImageBitmap = currentImageBitmap,
+                        onCropApply = onCropApply,
+                        onCropCancel = onCropCancel,
+                        rotation = rotation,
+                        onRotationChange = { rotation = it },
+                        flipHorizontal = flipHorizontal,
+                        onFlipHorizontalChange = { flipHorizontal = it },
+                        flipVertical = flipVertical,
+                        onFlipVerticalChange = { flipVertical = it },
+                        straightenAngle = straightenAngle,
+                        onStraightenAngleChange = { straightenAngle = it },
+                        showBottomSheet = { showBottomSheet = it },
+                        currentToolChange = { currentTool = it }
+                    )
+                }
             }
         }
     }

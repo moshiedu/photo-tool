@@ -63,6 +63,7 @@ fun BottomSheetContent(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
+        Spacer(Modifier.height(16.dp)) // Add space below the handle
         Text("Options for ${currentTool.name}", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
         // Dynamic content based on currentTool
