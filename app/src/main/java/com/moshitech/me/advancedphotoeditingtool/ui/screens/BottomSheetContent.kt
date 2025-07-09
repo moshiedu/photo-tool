@@ -106,15 +106,6 @@ fun BottomSheetContent(
                     Text("Flip Vertical: $flipVertical")
                 }
             }
-            PhotoEditorTool.CROP -> {
-                currentImageBitmap?.let {
-                    CropScreen(
-                        bitmap = it,
-                        onApplyCrop = onCropApply,
-                        onCancelCrop = onCropCancel
-                    )
-                }
-            }
             PhotoEditorTool.EFFECTS -> {
                 Text("Effect options will go here.")
                 // Add effect controls
@@ -123,9 +114,8 @@ fun BottomSheetContent(
                 Text("Text editing options will go here.")
                 // Add text input, font, color pickers
             }
-            else -> {
-                Text("Options for ${currentTool.name} will go here.")
-            }
+
+            PhotoEditorTool.CROP -> TODO()
         }
         Spacer(Modifier.height(32.dp)) // Space for bottom sheet handle
     }

@@ -1,17 +1,5 @@
 package com.moshitech.me.advancedphotoeditingtool.ui.screens
 
-
-
-
-
-
-
-
-
-
-
-
-
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.unit.dp
@@ -19,7 +7,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -30,18 +17,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.moshitech.me.advancedphotoeditingtool.applyTransformations
 import com.moshitech.me.advancedphotoeditingtool.ui.theme.AdvancedPhotoEditingToolTheme
 import com.moshitech.me.advancedphotoeditingtool.uriToBitmap
-import com.moshitech.me.advancedphotoeditingtool.applyTransformations
-
-
-
-
-
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntSize
+import com.moshitech.me.advancedphotoeditingtool.cropBitmap
 
 enum class PhotoEditorTool {
     AUTO, FILTERS, CROP, EFFECTS, TEXT, ROTATE
@@ -73,12 +59,18 @@ fun PhotoEditorScreen(
     var rotation by remember { mutableStateOf(0f) }
     var flipHorizontal by remember { mutableStateOf(false) }
     var flipVertical by remember { mutableStateOf(false) }
+    
+    // Hoisted crop state
+    var cropRect by remember { mutableStateOf(Rect.Zero) }
+    var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
     var straightenAngle by remember { mutableStateOf(0f) }
-    
-    
-    
+    var selectedAspectRatio by remember { mutableStateOf(AspectRatio.FREE) }
+    var showGoldenRatioGuide by remember { mutableStateOf(false) }
+    var showDiagonalGuide by remember { mutableStateOf(false) }
+    var showZoomSlider by remember { mutableStateOf(false) }
+    var containerSize by remember { mutableStateOf(IntSize.Zero) }
 
-    
 
     LaunchedEffect(selectedImageUri, capturedImageBitmap) {
         currentImageBitmap = capturedImageBitmap ?: selectedImageUri?.let { uriToBitmap(it, context) }
@@ -136,6 +128,7 @@ fun PhotoEditorScreen(
                     }
                     ToolButton(tool = PhotoEditorTool.CROP, currentTool = currentTool) {
                         currentTool = it
+                        showBottomSheet = true
                     }
                     ToolButton(tool = PhotoEditorTool.EFFECTS, currentTool = currentTool) {
                         currentTool = it
@@ -170,16 +163,22 @@ fun PhotoEditorScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (currentTool == PhotoEditorTool.CROP && currentImageBitmap != null) {
-                    CropScreen(
+                    CropImageArea(
                         bitmap = currentImageBitmap!!,
-                        onApplyCrop = { croppedBitmap ->
-                            onCropApply(croppedBitmap)
-                            currentTool = PhotoEditorTool.AUTO
-                        },
-                        onCancelCrop = {
-                            onCropCancel()
-                            currentTool = PhotoEditorTool.AUTO
-                        }
+                        cropRect = cropRect,
+                        scale = scale,
+                        rotation = rotation,
+                        offset = offset,
+                        straightenAngle = straightenAngle,
+                        containerSize = containerSize,
+                        onCropRectChange = { cropRect = it },
+                        onScaleChange = { scale = it },
+                        onRotationChange = { rotation = it },
+                        onOffsetChange = { offset = it },
+                        onContainerSizeChange = { containerSize = it },
+                        aspectRatio = selectedAspectRatio,
+                        showGoldenRatioGuide = showGoldenRatioGuide,
+                        showDiagonalGuide = showDiagonalGuide
                     )
                 } else {
                     currentImageBitmap?.let {
@@ -240,43 +239,86 @@ fun PhotoEditorScreen(
                 containerColor = Color.White,
                 shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .width(48.dp)
-                            .height(4.dp)
-                            .background(Color.LightGray, RoundedCornerShape(2.dp))
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    BottomSheetContent(
-                        currentTool = currentTool,
-                        currentImageBitmap = currentImageBitmap,
-                        onCropApply = onCropApply,
-                        onCropCancel = onCropCancel,
-                        rotation = rotation,
-                        onRotationChange = { rotation = it },
-                        flipHorizontal = flipHorizontal,
-                        onFlipHorizontalChange = { flipHorizontal = it },
-                        flipVertical = flipVertical,
-                        onFlipVerticalChange = { flipVertical = it },
+                if (currentTool == PhotoEditorTool.CROP) {
+                    CropControls(
+                        scale = scale,
                         straightenAngle = straightenAngle,
+                        selectedAspectRatio = selectedAspectRatio,
+                        showGoldenRatioGuide = showGoldenRatioGuide,
+                        showDiagonalGuide = showDiagonalGuide,
+                        showZoomSlider = showZoomSlider,
+                        onScaleChange = { scale = it },
                         onStraightenAngleChange = { straightenAngle = it },
-                        showBottomSheet = { showBottomSheet = it },
-                        currentToolChange = { currentTool = it }
+                        onAspectRatioChange = { selectedAspectRatio = it },
+                        onShowGoldenRatioGuideChange = { showGoldenRatioGuide = it },
+                        onShowDiagonalGuideChange = { showDiagonalGuide = it },
+                        onShowZoomSliderChange = { showZoomSlider = it },
+                        onApply = {
+                            currentImageBitmap?.let {
+                                val croppedBitmap = cropBitmap(
+                                    it,
+                                    cropRect,
+                                    scale,
+                                    rotation + straightenAngle,
+                                    offset,
+                                    containerSize
+                                )
+                                onCropApply(croppedBitmap)
+                            }
+                            showBottomSheet = false
+                            currentTool = PhotoEditorTool.AUTO
+                        },
+                        onCancel = {
+                            onCropCancel()
+                            showBottomSheet = false
+                            currentTool = PhotoEditorTool.AUTO
+                        },
+                        onReset = {
+                            scale = 1f
+                            rotation = 0f
+                            offset = Offset.Zero
+                            cropRect = Rect.Zero
+                            straightenAngle = 0f
+                            selectedAspectRatio = AspectRatio.FREE
+                            showGoldenRatioGuide = false
+                            showDiagonalGuide = false
+                        }
                     )
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(48.dp)
+                                .height(4.dp)
+                                .background(Color.LightGray, RoundedCornerShape(2.dp))
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        BottomSheetContent(
+                            currentTool = currentTool,
+                            currentImageBitmap = currentImageBitmap,
+                            onCropApply = onCropApply,
+                            onCropCancel = onCropCancel,
+                            rotation = rotation,
+                            onRotationChange = { rotation = it },
+                            flipHorizontal = flipHorizontal,
+                            onFlipHorizontalChange = { flipHorizontal = it },
+                            flipVertical = flipVertical,
+                            onFlipVerticalChange = { flipVertical = it },
+                            straightenAngle = straightenAngle,
+                            onStraightenAngleChange = { straightenAngle = it },
+                            showBottomSheet = { showBottomSheet = it },
+                            currentToolChange = { currentTool = it }
+                        )
+                    }
                 }
             }
         }
     }
 }
-
-
-
-
 
 @Preview(showBackground = true)
 @Composable
